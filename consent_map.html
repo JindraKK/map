@@ -226,6 +226,13 @@ body {
         <button data-val="city">Cities</button>
       </div>
     </div>
+    <div class="toolbar-group">
+      <label>Scale</label>
+      <div class="btn-group" id="scale-group">
+        <button data-val="absolute" class="active">Absolute</button>
+        <button data-val="relative">Relative</button>
+      </div>
+    </div>
     <div class="stats-bar">
       <div class="stat">
         <div class="val" id="stat-total">–</div>
@@ -565,17 +572,43 @@ const COLOR_STOPS = [
   [1.00, [ 26, 150,  65]],
 ];
 
+// Current scale range — updated before each render
+const SCALE = { mode: 'absolute', min: 0, max: 1 };
+
+// Call after aggregation to set the scale range from actual data
+function updateScale(ratios) {
+  if (SCALE.mode === 'absolute' || !ratios.length) {
+    SCALE.min = 0; SCALE.max = 1;
+  } else {
+    const valid = ratios.filter(r => r !== null);
+    if (!valid.length) { SCALE.min = 0; SCALE.max = 1; return; }
+    SCALE.min = Math.max(0,   Math.min(...valid) - 0.10);
+    SCALE.max = Math.min(1,   Math.max(...valid) + 0.10);
+  }
+  // Update legend tick labels
+  const fmt = v => (v * 100).toFixed(0) + ' %';
+  const mid  = (SCALE.min + SCALE.max) / 2;
+  const q1   = (SCALE.min + mid) / 2;
+  const q3   = (mid + SCALE.max) / 2;
+  const el   = document.querySelector('.legend-ticks');
+  if (el) el.innerHTML =
+    `<span>${fmt(SCALE.min)}</span><span>${fmt(q1)}</span><span>${fmt(mid)}</span><span>${fmt(q3)}</span><span>${fmt(SCALE.max)}</span>`;
+}
+
 function ratioColor(ratio) {
   if (ratio === null || ratio === undefined || isNaN(ratio)) return '#cccccc';
-  const r = Math.max(0, Math.min(1, ratio));
+  // Normalise into [0,1] within the current scale window
+  const t = SCALE.max > SCALE.min
+    ? Math.max(0, Math.min(1, (ratio - SCALE.min) / (SCALE.max - SCALE.min)))
+    : 0.5;
   for (let i = 0; i < COLOR_STOPS.length - 1; i++) {
     const [t0, c0] = COLOR_STOPS[i];
     const [t1, c1] = COLOR_STOPS[i + 1];
-    if (r >= t0 && r <= t1) {
-      const t  = (r - t0) / (t1 - t0);
-      const ri = Math.round(c0[0] + (c1[0] - c0[0]) * t);
-      const gi = Math.round(c0[1] + (c1[1] - c0[1]) * t);
-      const bi = Math.round(c0[2] + (c1[2] - c0[2]) * t);
+    if (t >= t0 && t <= t1) {
+      const f  = (t - t0) / (t1 - t0);
+      const ri = Math.round(c0[0] + (c1[0] - c0[0]) * f);
+      const gi = Math.round(c0[1] + (c1[1] - c0[1]) * f);
+      const bi = Math.round(c0[2] + (c1[2] - c0[2]) * f);
       return `rgb(${ri},${gi},${bi})`;
     }
   }
@@ -684,25 +717,21 @@ function saveGeocodeCache() {
   } catch(e) {}
 }
 
-let lastGeocodeTs = 0;
-
+// Photon (Komoot/OSM) – no strict rate limit, supports parallel requests.
+// Germany bounding box keeps results accurate.
 async function resolveCoords(city) {
   const key = city.toLowerCase().trim();
   if (CITY_COORDS[key]) return CITY_COORDS[key];
-  if (key in geocodeCache) return geocodeCache[key]; // may be null (confirmed miss)
-
-  // Respect Nominatim rate limit: 1 req / sec
-  const now = Date.now();
-  const wait = Math.max(0, 1150 - (now - lastGeocodeTs));
-  if (wait > 0) await new Promise(r => setTimeout(r, wait));
-  lastGeocodeTs = Date.now();
+  if (key in geocodeCache) return geocodeCache[key];
 
   try {
-    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)},+Germany&format=json&limit=1&countrycodes=de`;
+    const q   = encodeURIComponent(city);
+    const url = `https://photon.komoot.io/api/?q=${q}&limit=1&lang=de&bbox=5.9,47.3,15.0,55.0`;
     const resp = await fetch(url);
     if (!resp.ok) throw new Error(resp.status);
     const data = await resp.json();
-    const coords = data.length > 0 ? [+data[0].lat, +data[0].lon] : null;
+    const f    = data.features?.[0];
+    const coords = f ? [f.geometry.coordinates[1], f.geometry.coordinates[0]] : null;
     geocodeCache[key] = coords;
     saveGeocodeCache();
     return coords;
@@ -929,9 +958,10 @@ function renderMap() {
 function renderRegions(rows) {
   if (!S.geoJSON) return;
   const agg = aggregateBy(rows, 'region');
-  const areas = Object.keys(agg).filter(k => (k in agg) && (agg[k].aa + agg[k].ar) > 0);
+  const areas = Object.keys(agg).filter(k => (agg[k].aa + agg[k].ar) > 0);
   document.getElementById('stat-areas').textContent = areas.length;
   document.getElementById('stat-areas-lbl').textContent = 'Regions';
+  updateScale(areas.map(k => getRatio(agg[k])));
 
   geoLayer = L.geoJSON(S.geoJSON, {
     style(f) {
@@ -993,11 +1023,12 @@ async function renderCities(rows, token) {
   const cityEntries = Object.entries(agg)
     .filter(([, d]) => getActive(d) >= 5)              // skip noise
     .sort((a, b) => getActive(b[1]) - getActive(a[1])) // biggest first
-    .slice(0, 300);                                    // cap for performance
+    .slice(0, 150);                                    // top 150 keeps map readable
 
   const maxT = Math.max(...cityEntries.map(([, d]) => getActive(d)), 1);
   document.getElementById('stat-areas').textContent = cityEntries.length;
   document.getElementById('stat-areas-lbl').textContent = 'Cities';
+  updateScale(cityEntries.map(([, d]) => getRatio(d)));
 
   const markerGroup = L.layerGroup().addTo(leafMap);
   bubbleLayer = markerGroup;
@@ -1018,16 +1049,20 @@ async function renderCities(rows, token) {
 
   if (!toGeocode.length) return;
 
-  // Second pass: geocode remaining cities via Nominatim
+  // Second pass: geocode remaining cities via Photon (parallel batches of 5)
+  const BATCH = 5;
   setGeocodeStatus(`Locating ${toGeocode.length} cities…`);
 
-  for (let i = 0; i < toGeocode.length; i++) {
-    if (token !== renderToken) { setGeocodeStatus(''); return; } // view changed, bail out
-    const [city, d] = toGeocode[i];
-    const coords = await resolveCoords(city);
+  for (let i = 0; i < toGeocode.length; i += BATCH) {
     if (token !== renderToken) { setGeocodeStatus(''); return; }
-    if (coords) markerGroup.addLayer(createCityMarker(city, coords, d, maxT));
-    setGeocodeStatus(`Locating cities… ${i + 1} / ${toGeocode.length}`);
+    const slice   = toGeocode.slice(i, i + BATCH);
+    const results = await Promise.all(slice.map(([city]) => resolveCoords(city)));
+    if (token !== renderToken) { setGeocodeStatus(''); return; }
+    slice.forEach(([city, d], j) => {
+      if (results[j]) markerGroup.addLayer(createCityMarker(city, results[j], d, maxT));
+    });
+    setGeocodeStatus(`Locating cities… ${Math.min(i + BATCH, toGeocode.length)} / ${toGeocode.length}`);
+    if (i + BATCH < toGeocode.length) await new Promise(r => setTimeout(r, 150));
   }
   setGeocodeStatus('');
 }
@@ -1129,6 +1164,14 @@ function resetToUpload() {
     document.querySelectorAll('#view-group button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     S.view = btn.dataset.val;
+    renderMap();
+  });
+
+  document.getElementById('scale-group').addEventListener('click', e => {
+    const btn = e.target.closest('[data-val]'); if (!btn) return;
+    document.querySelectorAll('#scale-group button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    SCALE.mode = btn.dataset.val;
     renderMap();
   });
 
