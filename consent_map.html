@@ -765,23 +765,14 @@ function initMap() {
   loadGeoJSON();
 }
 
+// ── Embedded GeoJSON – 16 German Bundesländer (simplified polygons) ──────────
+const GERMANY_GEOJSON = {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"NAME_1":"Schleswig-Holstein"},"geometry":{"type":"Polygon","coordinates":[[[8.62,53.55],[9.02,53.41],[9.72,53.4],[10.34,53.59],[10.94,53.82],[11.31,54.09],[10.88,54.48],[10.1,55.06],[9.36,54.83],[8.97,54.9],[8.62,55.01],[8.37,54.79],[8.02,54.6],[8.31,54.0],[8.62,53.55]]]}},{"type":"Feature","properties":{"NAME_1":"Hamburg"},"geometry":{"type":"Polygon","coordinates":[[[9.73,53.41],[10.33,53.59],[10.2,53.73],[9.83,53.74],[9.73,53.41]]]}},{"type":"Feature","properties":{"NAME_1":"Mecklenburg-Vorpommern"},"geometry":{"type":"Polygon","coordinates":[[[10.59,53.55],[11.31,54.09],[12.37,54.31],[13.1,54.13],[13.98,54.07],[14.28,54.01],[14.41,53.78],[14.05,53.33],[13.43,53.1],[12.26,53.26],[11.56,53.11],[10.59,53.11],[10.59,53.55]]]}},{"type":"Feature","properties":{"NAME_1":"Bremen"},"geometry":{"type":"Polygon","coordinates":[[[8.48,53.01],[8.98,53.01],[8.98,53.23],[8.7,53.24],[8.48,53.23],[8.48,53.01]]]}},{"type":"Feature","properties":{"NAME_1":"Niedersachsen"},"geometry":{"type":"Polygon","coordinates":[[[6.65,51.41],[7.06,51.29],[7.6,51.29],[8.48,51.43],[9.46,51.4],[9.89,51.37],[10.57,51.49],[11.6,51.67],[11.6,52.55],[11.56,53.11],[12.26,53.26],[10.59,53.11],[10.59,53.55],[9.72,53.4],[9.02,53.41],[8.62,53.55],[8.31,54.0],[8.02,53.6],[7.32,53.01],[6.98,52.8],[6.71,52.66],[6.65,51.41]]]}},{"type":"Feature","properties":{"NAME_1":"Sachsen-Anhalt"},"geometry":{"type":"Polygon","coordinates":[[[10.57,51.49],[11.6,51.67],[11.6,52.55],[11.56,53.11],[10.59,53.11],[10.59,53.05],[10.57,51.49]]]}},{"type":"Feature","properties":{"NAME_1":"Brandenburg"},"geometry":{"type":"Polygon","coordinates":[[[11.28,51.36],[12.67,51.36],[13.84,51.5],[14.77,51.56],[14.77,52.44],[14.4,53.26],[13.43,53.1],[12.26,53.26],[11.56,53.11],[11.6,52.55],[11.28,52.55],[11.28,51.36]]]}},{"type":"Feature","properties":{"NAME_1":"Berlin"},"geometry":{"type":"Polygon","coordinates":[[[13.09,52.34],[13.76,52.34],[13.76,52.68],[13.09,52.68],[13.09,52.34]]]}},{"type":"Feature","properties":{"NAME_1":"Nordrhein-Westfalen"},"geometry":{"type":"Polygon","coordinates":[[[6.0,50.31],[6.47,50.31],[6.86,51.05],[7.15,51.1],[7.82,51.05],[8.31,51.28],[9.46,51.4],[9.46,52.53],[8.48,51.43],[7.6,51.29],[7.06,51.29],[6.65,51.41],[6.65,51.29],[6.0,51.1],[6.0,50.31]]]}},{"type":"Feature","properties":{"NAME_1":"Hessen"},"geometry":{"type":"Polygon","coordinates":[[[7.79,49.39],[8.53,49.39],[9.22,49.12],[9.89,49.39],[10.24,49.9],[10.24,50.56],[10.57,51.49],[9.89,51.37],[9.46,51.4],[8.31,51.28],[7.79,50.69],[7.79,49.39]]]}},{"type":"Feature","properties":{"NAME_1":"Thüringen"},"geometry":{"type":"Polygon","coordinates":[[[9.89,50.19],[10.57,50.19],[11.6,50.19],[12.67,50.19],[12.67,51.36],[11.28,51.36],[10.57,51.49],[10.24,50.56],[9.89,51.37],[9.89,50.19]]]}},{"type":"Feature","properties":{"NAME_1":"Sachsen"},"geometry":{"type":"Polygon","coordinates":[[[11.87,50.18],[12.67,50.19],[13.84,50.17],[15.04,50.76],[15.04,51.57],[14.77,51.56],[13.84,51.5],[12.67,51.36],[11.87,51.67],[11.87,50.18]]]}},{"type":"Feature","properties":{"NAME_1":"Rheinland-Pfalz"},"geometry":{"type":"Polygon","coordinates":[[[6.11,49.11],[7.42,49.11],[8.53,49.39],[7.79,49.39],[7.79,50.69],[8.31,51.28],[7.15,51.1],[6.86,51.05],[6.47,50.31],[6.11,49.97],[6.11,49.11]]]}},{"type":"Feature","properties":{"NAME_1":"Saarland"},"geometry":{"type":"Polygon","coordinates":[[[6.36,49.11],[7.42,49.11],[7.42,49.64],[6.36,49.64],[6.36,49.11]]]}},{"type":"Feature","properties":{"NAME_1":"Baden-Württemberg"},"geometry":{"type":"Polygon","coordinates":[[[7.59,47.57],[8.97,47.53],[10.49,47.53],[10.49,48.4],[9.18,48.42],[9.18,48.78],[9.22,49.12],[8.53,49.39],[7.79,49.39],[7.42,49.11],[7.42,49.0],[7.59,47.57]]]}},{"type":"Feature","properties":{"NAME_1":"Bayern"},"geometry":{"type":"Polygon","coordinates":[[[9.18,48.42],[10.49,48.4],[10.49,47.53],[10.99,47.27],[13.01,47.5],[13.84,47.63],[13.84,48.44],[13.84,49.2],[13.84,50.17],[12.67,50.19],[11.6,50.19],[10.57,50.19],[9.89,50.19],[9.89,49.39],[9.22,49.12],[9.18,48.78],[9.18,48.42]]]}}]};
+
 function loadGeoJSON() {
-  document.getElementById('loading-overlay').style.display = 'flex';
-  fetch('https://raw.githubusercontent.com/isellsoap/deutschlandGIS/main/2_bundeslaender/4_niedrig.geo.json')
-    .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(data => {
-      S.geoJSON = data;
-      document.getElementById('loading-overlay').style.display = 'none';
-      renderMap();
-    })
-    .catch(err => {
-      console.error('GeoJSON load error:', err);
-      document.getElementById('loading-overlay').style.display = 'none';
-      const p = document.getElementById('loading-overlay').querySelector('p');
-      if(p) p.textContent = 'Failed to load map data. Check your connection.';
-      document.getElementById('loading-overlay').style.display = 'flex';
-      document.getElementById('loading-overlay').querySelector('.spinner').style.display = 'none';
-    });
+  // GeoJSON is embedded – no network request needed
+  S.geoJSON = GERMANY_GEOJSON;
+  document.getElementById('loading-overlay').style.display = 'none';
+  renderMap();
 }
 
 // ════════════════════════════════════════════════════════════
