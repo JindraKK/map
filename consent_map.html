@@ -6,188 +6,110 @@
 <title>Regional Value Map</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 <style>
-/* ── Reset & Base ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  background: #f0f2f5;
-  color: #1a2332;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+  background: #f0f2f5; color: #1a2332;
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
 }
 
 /* ── Header ── */
 .app-header {
-  background: #1a2332;
-  color: #fff;
-  padding: 10px 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-  box-shadow: 0 2px 6px rgba(0,0,0,.25);
-  z-index: 100;
+  background: #1a2332; color: #fff;
+  padding: 10px 20px; display: flex; align-items: center; gap: 16px;
+  flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,.25); z-index: 100;
 }
 .app-header h1 { font-size: 17px; font-weight: 600; letter-spacing: .3px; }
 .app-header .subtitle { font-size: 12px; color: #7a8799; margin-top: 1px; }
 .app-header .file-badge {
-  margin-left: auto;
-  background: rgba(255,255,255,.1);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 20px;
-  padding: 4px 12px;
-  font-size: 12px;
-  color: #a8b5c4;
-  display: none;
-  align-items: center;
-  gap: 6px;
+  margin-left: auto; background: rgba(255,255,255,.1);
+  border: 1px solid rgba(255,255,255,.15); border-radius: 20px;
+  padding: 4px 12px; font-size: 12px; color: #a8b5c4;
+  display: none; align-items: center; gap: 6px;
 }
 .app-header .file-badge.visible { display: flex; }
 .reset-btn {
   background: none; border: none; color: #7a8799;
-  cursor: pointer; font-size: 14px; padding: 2px 6px;
-  border-radius: 4px;
+  cursor: pointer; font-size: 14px; padding: 2px 6px; border-radius: 4px;
 }
 .reset-btn:hover { background: rgba(255,255,255,.1); color: #fff; }
 
 /* ── Upload zone ── */
 #upload-zone {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  padding: 32px;
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 16px; padding: 32px;
 }
 .drop-area {
-  border: 2px dashed #c5cdd8;
-  border-radius: 14px;
-  padding: 56px 80px;
-  text-align: center;
-  cursor: pointer;
-  transition: border-color .2s, background .2s;
-  background: #fff;
-  max-width: 520px;
-  width: 100%;
+  border: 2px dashed #c5cdd8; border-radius: 14px; padding: 56px 80px;
+  text-align: center; cursor: pointer;
+  transition: border-color .2s, background .2s; background: #fff;
+  max-width: 520px; width: 100%;
 }
-.drop-area:hover, .drop-area.drag-over {
-  border-color: #4a7fd4;
-  background: #f0f5ff;
-}
+.drop-area:hover, .drop-area.drag-over { border-color: #4a7fd4; background: #f0f5ff; }
 .drop-area .icon { font-size: 52px; margin-bottom: 14px; display: block; }
 .drop-area h2 { font-size: 16px; font-weight: 600; margin-bottom: 8px; }
 .drop-area p { font-size: 14px; color: #666; }
 .drop-area p strong { color: #4a7fd4; }
 .drop-area .hint {
   font-size: 11px; color: #aaa; margin-top: 16px;
-  padding-top: 12px; border-top: 1px solid #eee;
-  line-height: 1.6;
+  padding-top: 12px; border-top: 1px solid #eee; line-height: 1.6;
 }
 #file-input { display: none; }
 
 /* ── Dashboard ── */
-#dashboard {
-  flex: 1;
-  display: none;
-  flex-direction: column;
-  overflow: hidden;
-}
+#dashboard { flex: 1; display: none; flex-direction: column; overflow: hidden; }
 
 /* ── Toolbar ── */
 .toolbar {
-  background: #fff;
-  border-bottom: 1px solid #e0e4ea;
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-  z-index: 50;
+  background: #fff; border-bottom: 1px solid #e0e4ea;
+  padding: 8px 16px; display: flex; align-items: center;
+  gap: 20px; flex-wrap: wrap; flex-shrink: 0; z-index: 50;
 }
 .toolbar-group { display: flex; flex-direction: column; gap: 3px; }
 .toolbar-group label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .6px;
-  color: #8a95a3;
+  font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .6px; color: #8a95a3;
 }
 .btn-group {
-  display: flex;
-  border: 1px solid #d0d5dd;
-  border-radius: 7px;
-  overflow: hidden;
+  display: flex; border: 1px solid #d0d5dd; border-radius: 7px; overflow: hidden;
 }
 .btn-group button {
-  padding: 5px 13px;
-  font-size: 12px;
-  font-weight: 500;
-  background: #fff;
-  border: none;
-  cursor: pointer;
-  color: #556;
+  padding: 5px 13px; font-size: 12px; font-weight: 500;
+  background: #fff; border: none; cursor: pointer; color: #556;
   transition: background .15s, color .15s;
 }
 .btn-group button + button { border-left: 1px solid #d0d5dd; }
 .btn-group button:hover { background: #f4f6f9; }
 .btn-group button.active { background: #1a2332; color: #fff; }
 
-.period-nav {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
+.period-nav { display: flex; align-items: center; gap: 6px; }
 .period-nav .nav-btn {
-  width: 28px; height: 28px;
-  border: 1px solid #d0d5dd;
-  border-radius: 7px;
-  background: #fff;
-  cursor: pointer;
-  font-size: 15px;
+  width: 28px; height: 28px; border: 1px solid #d0d5dd; border-radius: 7px;
+  background: #fff; cursor: pointer; font-size: 15px;
   display: flex; align-items: center; justify-content: center;
-  transition: background .15s;
-  color: #445;
+  transition: background .15s; color: #445;
 }
 .period-nav .nav-btn:hover { background: #f4f6f9; }
 .period-nav .nav-btn:disabled { opacity: .35; cursor: default; }
 .period-nav .period-label {
-  font-size: 13px; font-weight: 600;
-  min-width: 220px; text-align: center;
-  color: #1a2332;
+  font-size: 13px; font-weight: 600; min-width: 220px;
+  text-align: center; color: #1a2332;
 }
 
-/* stats on the right */
-.stats-bar {
-  margin-left: auto;
-  display: flex;
-  gap: 24px;
-  flex-shrink: 0;
-}
+.stats-bar { margin-left: auto; display: flex; gap: 24px; flex-shrink: 0; }
 .stat { text-align: right; }
 .stat .val { font-size: 18px; font-weight: 700; color: #1a2332; line-height: 1; }
 .stat .lbl { font-size: 10px; color: #8a95a3; text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
 
-/* ── Map container ── */
-#map-container {
-  flex: 1;
-  position: relative;
-  overflow: hidden;
-}
+/* ── Map ── */
+#map-container { flex: 1; position: relative; overflow: hidden; }
 #map { height: 100%; width: 100%; }
 
-/* ── Leaflet legend override ── */
 .map-legend {
-  background: rgba(255,255,255,.96);
-  padding: 12px 16px;
-  border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.14);
-  min-width: 170px;
+  background: rgba(255,255,255,.96); padding: 12px 16px;
+  border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,.14); min-width: 170px;
 }
 .map-legend h4 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #666; margin-bottom: 8px; }
 .legend-bar {
@@ -195,82 +117,57 @@ body {
   background: linear-gradient(to right, #d7191c, #fdae61, #ffffbf, #a6d96a, #1a9641);
   margin-bottom: 5px;
 }
-.legend-ticks {
-  display: flex; justify-content: space-between;
-  font-size: 10px; color: #888;
-}
+.legend-ticks { display: flex; justify-content: space-between; font-size: 10px; color: #888; }
 
 /* ── Tooltip ── */
 .map-tooltip {
-  position: absolute;
-  pointer-events: none;
-  z-index: 9000;
-  display: none;
-  background: #fff;
-  border: 1px solid #dde2ea;
-  border-radius: 10px;
-  padding: 13px 16px;
-  box-shadow: 0 6px 20px rgba(0,0,0,.15);
-  min-width: 200px;
-  max-width: 260px;
+  position: absolute; pointer-events: none; z-index: 9000; display: none;
+  background: #fff; border: 1px solid #dde2ea; border-radius: 10px;
+  padding: 13px 16px; box-shadow: 0 6px 20px rgba(0,0,0,.15);
+  min-width: 200px; max-width: 260px;
 }
-.map-tooltip .tt-name {
-  font-size: 14px; font-weight: 700; color: #1a2332;
-  margin-bottom: 8px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.map-tooltip .tt-ratio {
-  font-size: 26px; font-weight: 800;
-  line-height: 1; margin-bottom: 10px;
-}
-.map-tooltip .tt-row {
-  display: flex; justify-content: space-between;
-  font-size: 12px; color: #556; margin-bottom: 3px;
-}
+.map-tooltip .tt-name { font-size: 14px; font-weight: 700; color: #1a2332; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-tooltip .tt-ratio { font-size: 26px; font-weight: 800; line-height: 1; margin-bottom: 10px; }
+.map-tooltip .tt-row { display: flex; justify-content: space-between; font-size: 12px; color: #556; margin-bottom: 3px; }
 .map-tooltip .tt-row .v { font-weight: 600; color: #1a2332; }
-.tt-bar {
-  width: 100%; height: 7px; border-radius: 4px;
-  background: #edf0f4; margin-top: 10px; overflow: hidden;
-}
+.tt-bar { width: 100%; height: 7px; border-radius: 4px; background: #edf0f4; margin-top: 10px; overflow: hidden; }
 .tt-bar-fill { height: 100%; border-radius: 4px; transition: width .3s; }
 
-/* ── Loading overlay ── */
+/* ── Loading ── */
 .loading-overlay {
-  position: absolute; inset: 0;
-  background: rgba(240,242,245,.85);
+  position: absolute; inset: 0; background: rgba(240,242,245,.85);
   display: flex; align-items: center; justify-content: center;
   z-index: 8000; flex-direction: column; gap: 12px;
 }
 .loading-overlay .spinner {
-  width: 36px; height: 36px;
-  border: 3px solid #dde2ea;
-  border-top-color: #4a7fd4;
-  border-radius: 50%;
+  width: 36px; height: 36px; border: 3px solid #dde2ea;
+  border-top-color: #4a7fd4; border-radius: 50%;
   animation: spin .7s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .loading-overlay p { font-size: 13px; color: #667; }
 
-/* ── No-data notice ── */
 .no-data-notice {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  background: #fff; padding: 16px 24px;
-  border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,.1);
-  font-size: 13px; color: #889; text-align: center;
-  z-index: 7000; display: none;
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+  background: #fff; padding: 16px 24px; border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.1); font-size: 13px; color: #889;
+  text-align: center; z-index: 7000; display: none;
 }
 
-/* ── City bubble size legend ── */
+/* ── Geocoding status ── */
+.geocode-status {
+  position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
+  background: rgba(26,35,50,.82); color: #fff; font-size: 12px;
+  padding: 6px 16px; border-radius: 20px; z-index: 6000;
+  display: none; pointer-events: none; white-space: nowrap;
+}
+
+/* ── City bubble legend ── */
 .bubble-legend {
-  position: absolute;
-  bottom: 110px; right: 12px;
-  background: rgba(255,255,255,.95);
-  border-radius: 10px;
-  padding: 10px 14px;
-  box-shadow: 0 2px 10px rgba(0,0,0,.12);
-  font-size: 11px; color: #778;
-  z-index: 500; display: none;
+  position: absolute; bottom: 110px; right: 12px;
+  background: rgba(255,255,255,.95); border-radius: 10px;
+  padding: 10px 14px; box-shadow: 0 2px 10px rgba(0,0,0,.12);
+  font-size: 11px; color: #778; z-index: 500; display: none;
 }
 .bubble-legend h4 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #889; margin-bottom: 8px; }
 .bubble-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
@@ -279,7 +176,6 @@ body {
 </head>
 <body>
 
-<!-- ══ HEADER ══ -->
 <div class="app-header">
   <div>
     <h1>Regional Value Map</h1>
@@ -288,38 +184,33 @@ body {
   <div class="file-badge" id="file-badge">
     <span>📄</span>
     <span id="file-name">–</span>
-    <button class="reset-btn" id="reset-btn" title="Nahrát jiný soubor">✕</button>
+    <button class="reset-btn" id="reset-btn" title="Load different file">✕</button>
   </div>
 </div>
 
-<!-- ══ UPLOAD ZONE ══ -->
 <div id="upload-zone">
   <div class="drop-area" id="drop-area">
     <span class="icon">📊</span>
     <h2>Upload data file</h2>
-    <p>Drop file here or <strong>click to browse</strong></p>
+    <p>Drop CSV here or <strong>click to browse</strong></p>
     <div class="hint">
       Expected columns:<br>
-      <code>event_date_local · visitor_region · visitor_city · cookies_allowed_count · cookies_refused_count · total_count</code>
+      <code>slot_type · slot · visitor_region · visitor_city · cookies_allowed_count · cookies_refused_count · total_count</code>
     </div>
   </div>
-  <input type="file" id="file-input" accept=".xlsx,.xls,.csv">
+  <input type="file" id="file-input" accept=".csv">
 </div>
 
-<!-- ══ DASHBOARD ══ -->
 <div id="dashboard">
-
-  <!-- Toolbar -->
   <div class="toolbar">
     <div class="toolbar-group">
       <label>Granularity</label>
       <div class="btn-group" id="gran-group">
-        <button data-val="day"   class="active">Day</button>
-        <button data-val="week"          >Week</button>
-        <button data-val="month"         >Month</button>
+        <button data-val="day" class="active">Day</button>
+        <button data-val="week">Week</button>
+        <button data-val="month">Month</button>
       </div>
     </div>
-
     <div class="toolbar-group">
       <label>Period</label>
       <div class="period-nav">
@@ -328,15 +219,13 @@ body {
         <button class="nav-btn" id="btn-next">›</button>
       </div>
     </div>
-
     <div class="toolbar-group">
       <label>View</label>
       <div class="btn-group" id="view-group">
         <button data-val="region" class="active">Regions</button>
-        <button data-val="city"            >Cities</button>
+        <button data-val="city">Cities</button>
       </div>
     </div>
-
     <div class="stats-bar">
       <div class="stat">
         <div class="val" id="stat-total">–</div>
@@ -353,17 +242,14 @@ body {
     </div>
   </div>
 
-  <!-- Map -->
   <div id="map-container">
     <div id="map"></div>
     <div class="loading-overlay" id="loading-overlay">
       <div class="spinner"></div>
-      <p>Loading map…</p>
+      <p id="loading-msg">Loading map…</p>
     </div>
-    <div class="no-data-notice" id="no-data-notice">
-      No data available for this period.
-    </div>
-    <!-- City bubble size legend -->
+    <div class="no-data-notice" id="no-data-notice">No data for this period.</div>
+    <div class="geocode-status" id="geocode-status"></div>
     <div class="bubble-legend" id="bubble-legend">
       <h4>Size = record volume</h4>
       <div class="bubble-row">
@@ -375,19 +261,19 @@ body {
         <span>Low volume</span>
       </div>
     </div>
-    <!-- Tooltip -->
     <div class="map-tooltip" id="map-tooltip"></div>
   </div>
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════════
-//  CITY COORDINATES (major German cities, lat/lng)
+//  CITY COORDINATES  (lat, lng)  –  major German cities
 // ════════════════════════════════════════════════════════════
 const CITY_COORDS = {
+  // ── national top cities ──
   'berlin': [52.5200, 13.4050],
   'hamburg': [53.5753, 10.0153],
-  'münchen': [48.1351, 11.5820], 'munich': [48.1351, 11.5820],
+  'münchen': [48.1351, 11.5820], 'munich': [48.1351, 11.5820], 'munchen': [48.1351, 11.5820],
   'köln': [50.9333, 6.9500], 'cologne': [50.9333, 6.9500], 'koeln': [50.9333, 6.9500],
   'frankfurt': [50.1109, 8.6821], 'frankfurt am main': [50.1109, 8.6821],
   'stuttgart': [48.7758, 9.1829],
@@ -433,7 +319,7 @@ const CITY_COORDS = {
   'ludwigshafen': [49.4811, 8.4353], 'ludwigshafen am rhein': [49.4811, 8.4353],
   'oldenburg': [53.1435, 8.2146],
   'leverkusen': [51.0459, 6.9845],
-  'osnabrück': [52.2799, 8.0472], 'osnabrck': [52.2799, 8.0472],
+  'osnabrück': [52.2799, 8.0472], 'osnabrck': [52.2799, 8.0472], 'osnabruck': [52.2799, 8.0472],
   'solingen': [51.1781, 7.0824],
   'heidelberg': [49.3988, 8.6724],
   'darmstadt': [49.8728, 8.6512],
@@ -467,7 +353,6 @@ const CITY_COORDS = {
   'schwerin': [53.6355, 11.4010],
   'zwickau': [50.7189, 12.4964],
   'paderborn': [51.7189, 8.7575],
-  'münchengladbach': [51.1805, 6.4428],
   'gütersloh': [51.9062, 8.3832], 'gutersloh': [51.9062, 8.3832],
   'iserlohn': [51.3747, 7.6958],
   'lünen': [51.6161, 7.5294],
@@ -485,10 +370,7 @@ const CITY_COORDS = {
   'straubing': [48.8779, 12.5776],
   'kempten': [47.7266, 10.3147],
   'frankfurt (oder)': [52.3417, 14.5500],
-  'cottbus': [51.7563, 14.3329],
-  'potsdam': [52.3906, 13.0645],
   'dessau': [51.8313, 12.2444], 'dessau-roßlau': [51.8313, 12.2444],
-  'halle (saale)': [51.4969, 11.9695],
   'halberstadt': [51.8956, 11.0528],
   'stendal': [52.5997, 11.8592],
   'neumünster': [54.0717, 9.9862], 'neumunster': [54.0717, 9.9862],
@@ -496,22 +378,134 @@ const CITY_COORDS = {
   'lüneburg': [53.2499, 10.4076], 'luneburg': [53.2499, 10.4076],
   'wolfenbüttel': [52.1628, 10.5356],
   'görlitz': [51.1537, 14.9897], 'gorlitz': [51.1537, 14.9897],
+  // ── additional medium cities ──
+  'aschaffenburg': [49.9762, 9.1523],
+  'ansbach': [49.3003, 10.5716],
+  'amberg': [49.4459, 11.8610],
+  'altötting': [48.2267, 12.6764], 'altotting': [48.2267, 12.6764],
+  'schweinfurt': [50.0470, 10.2290],
+  'coburg': [50.2592, 10.9630],
+  'hof': [50.3179, 11.9167],
+  'kaufbeuren': [47.8803, 10.6228],
+  'weiden': [49.6767, 12.1578], 'weiden in der oberpfalz': [49.6767, 12.1578],
+  'memmingen': [47.9874, 10.1810],
+  'deggendorf': [48.8303, 12.9633],
+  'eichstätt': [48.8939, 11.1886], 'eichstatt': [48.8939, 11.1886],
+  'neumarkt': [49.2820, 11.4627], 'neumarkt in der oberpfalz': [49.2820, 11.4627],
+  'dillingen': [48.5820, 10.4957], 'dillingen an der donau': [48.5820, 10.4957],
+  'günzburg': [48.4528, 10.2764], 'gunzburg': [48.4528, 10.2764],
+  'neu-ulm': [48.3936, 10.0136],
+  'lindau': [47.5455, 9.6841], 'lindau (bodensee)': [47.5455, 9.6841],
+  'traunstein': [47.8683, 12.6419],
+  'berchtesgaden': [47.6324, 13.0028],
+  'garmisch-partenkirchen': [47.4921, 11.0961],
+  'freising': [48.4028, 11.7489],
+  'dachau': [48.2597, 11.4348],
+  'ebersberg': [48.0770, 11.9664],
+  'erding': [48.3056, 11.9072],
+  'fürstenfeldbruck': [48.1782, 11.2353], 'furstenfeldbruck': [48.1782, 11.2353],
+  'germering': [48.1333, 11.3746],
+  'starnberg': [47.9991, 11.3414],
+  'gauting': [48.0706, 11.3830],
+  'unterschleißheim': [48.2803, 11.5778], 'unterschleissheim': [48.2803, 11.5778],
+  'garching': [48.2493, 11.6501],
+  'haar': [48.1028, 11.7286],
+  'vaterstetten': [48.1047, 11.7728],
+  'germering-unterpfaffenhofen': [48.1333, 11.3746],
+  'villingen-schwenningen': [48.0600, 8.4600],
+  'tübingen': [48.5216, 9.0576], 'tubingen': [48.5216, 9.0576],
+  'sindelfingen': [48.7130, 9.0017],
+  'esslingen': [48.7404, 9.3136], 'esslingen am neckar': [48.7404, 9.3136],
+  'ludwigsburg': [48.8983, 9.1917],
+  'göppingen': [48.7033, 9.6533], 'goppingen': [48.7033, 9.6533],
+  'aalen': [48.8377, 10.0931],
+  'rastatt': [48.8575, 8.2019],
+  'baden-baden': [48.7606, 8.2401],
+  'offenburg': [48.4726, 7.9408],
+  'lahr': [48.3403, 7.8718], 'lahr/schwarzwald': [48.3403, 7.8718],
+  'villingen': [48.0600, 8.4600],
+  'tuttlingen': [47.9855, 8.8150],
+  'rottweil': [48.1637, 8.6264],
+  'schwäbisch gmünd': [48.7997, 9.7978], 'schwabisch gmund': [48.7997, 9.7978],
+  'schwäbisch hall': [49.1124, 9.7381], 'schwabisch hall': [49.1124, 9.7381],
+  'biberach': [48.1004, 9.7889], 'biberach an der riß': [48.1004, 9.7889],
+  'friedrichshafen': [47.6547, 9.4783],
+  'überlingen': [47.7705, 9.1561], 'uberlingen': [47.7705, 9.1561],
+  'singen': [47.7579, 8.8408], 'singen (hohentwiel)': [47.7579, 8.8408],
+  'fulda': [50.5558, 9.6736],
+  'marburg': [50.8021, 8.7712],
+  'gießen': [50.5836, 8.6784], 'giessen': [50.5836, 8.6784],
+  'wetzlar': [50.5590, 8.5001],
+  'rüsselsheim': [49.9930, 8.4130], 'russelsheim': [49.9930, 8.4130],
+  'bad homburg': [50.2274, 8.6175], 'bad homburg vor der höhe': [50.2274, 8.6175],
+  'oberursel': [50.2011, 8.5772],
+  'langen': [49.9869, 8.6590],
+  'dreieich': [50.0126, 8.6986],
+  'gelnhausen': [50.2009, 9.1913],
+  'celle': [52.6249, 10.0813],
+  'goslar': [51.9060, 10.4286],
+  'wilhelmshaven': [53.5241, 8.1070],
+  'delmenhorst': [53.0507, 8.6359],
+  'emden': [53.3669, 7.2060],
+  'lingen': [52.5219, 7.3142], 'lingen (ems)': [52.5219, 7.3142],
+  'nordhorn': [52.4308, 7.0649],
+  'cloppenburg': [52.8479, 8.0447],
+  'papenburg': [53.0762, 7.4003],
+  'göttingen': [51.5413, 9.9158],
+  'clausthal-zellerfeld': [51.8095, 10.3382],
+  'braunlage': [51.7246, 10.6105],
+  'plauen': [50.4999, 12.1367],
+  'zittau': [50.8957, 14.8063],
+  'meißen': [51.1626, 13.4722], 'meissen': [51.1626, 13.4722],
+  'pirna': [50.9622, 13.9415],
+  'freital': [50.9127, 13.6489],
+  'weimar': [50.9795, 11.3235],
+  'eisenach': [50.9746, 10.3148],
+  'gotha': [50.9483, 10.7023],
+  'suhl': [50.6088, 10.6933],
+  'altenburg': [50.9862, 12.4358],
+  'greifswald': [54.0937, 13.3872],
+  'stralsund': [54.3090, 13.0810],
+  'wismar': [53.8924, 11.4654],
+  'neubrandenburg': [53.5557, 13.2602],
+  'güstrow': [53.7969, 12.1771], 'gustrow': [53.7969, 12.1771],
+  'rendsburg': [54.3027, 9.6642],
+  'husum': [54.4715, 9.0527],
+  'heide': [54.1961, 9.0967],
+  'itzehoe': [53.9238, 9.5166],
+  'saarlouis': [49.3148, 6.7519],
+  'neunkirchen': [49.3451, 7.1799],
+  'homburg': [49.3183, 7.3404], 'homburg (saar)': [49.3183, 7.3404],
+  'völklingen': [49.2508, 6.8608], 'volklingen': [49.2508, 6.8608],
+  'merseburg': [51.3549, 11.9928],
+  'bitterfeld': [51.6239, 12.3255], 'bitterfeld-wolfen': [51.6239, 12.3255],
+  'bernburg': [51.7957, 11.7307],
+  'quedlinburg': [51.7929, 11.1446],
+  'nordhausen': [51.5027, 10.7890],
+  'brandeburg an der havel': [52.4079, 12.5306], 'brandenburg an der havel': [52.4079, 12.5306],
+  'eberswalde': [52.8353, 13.8206],
+  'oranienburg': [52.7541, 13.2376],
+  'strausberg': [52.5796, 13.8832],
+  'frankfurt (oder)': [52.3417, 14.5500],
 };
 
 // ════════════════════════════════════════════════════════════
-//  BUNDESLAND NAME NORMALISATION
-//  Maps common English / variant spellings → canonical German
+//  BUNDESLAND NORMALISATION
 // ════════════════════════════════════════════════════════════
 const BUNDESLAND_MAP = {
   'bavaria': 'Bayern',
   'north rhine-westphalia': 'Nordrhein-Westfalen',
   'north rhine westphalia': 'Nordrhein-Westfalen',
   'nordrhein westfalen': 'Nordrhein-Westfalen',
+  'nordrhein-westfalen': 'Nordrhein-Westfalen',
   'nrw': 'Nordrhein-Westfalen',
   'lower saxony': 'Niedersachsen',
+  'niedersachsen': 'Niedersachsen',
   'saxony': 'Sachsen',
+  'sachsen': 'Sachsen',
   'free state of saxony': 'Sachsen',
   'saxony-anhalt': 'Sachsen-Anhalt',
+  'sachsen-anhalt': 'Sachsen-Anhalt',
   'thuringia': 'Thüringen',
   'free state of thuringia': 'Thüringen',
   'thuringen': 'Thüringen',
@@ -521,6 +515,7 @@ const BUNDESLAND_MAP = {
   'rhineland-palatinate': 'Rheinland-Pfalz',
   'rhineland palatinate': 'Rheinland-Pfalz',
   'rheinland-pfalz': 'Rheinland-Pfalz',
+  'rheinland pfalz': 'Rheinland-Pfalz',
   'mecklenburg-vorpommern': 'Mecklenburg-Vorpommern',
   'mecklenburg vorpommern': 'Mecklenburg-Vorpommern',
   'mecklenburg-western pomerania': 'Mecklenburg-Vorpommern',
@@ -528,17 +523,15 @@ const BUNDESLAND_MAP = {
   'schleswig holstein': 'Schleswig-Holstein',
   'baden-württemberg': 'Baden-Württemberg',
   'baden württemberg': 'Baden-Württemberg',
+  'bad-württemberg': 'Baden-Württemberg',
   'baden-wurttemberg': 'Baden-Württemberg',
   'brandeburg': 'Brandenburg',
-  'sachsen': 'Sachsen',
-  'sachsen-anhalt': 'Sachsen-Anhalt',
-  'niedersachsen': 'Niedersachsen',
-  'nordrhein-westfalen': 'Nordrhein-Westfalen',
   'saarland': 'Saarland',
   'berlin': 'Berlin',
   'hamburg': 'Hamburg',
   'bremen': 'Bremen',
-  'brandeburg': 'Brandenburg',
+  'bayern': 'Bayern',
+  'brandenburg': 'Brandenburg',
 };
 
 const CANONICAL_BUNDESLAENDER = [
@@ -548,6 +541,8 @@ const CANONICAL_BUNDESLAENDER = [
   'Schleswig-Holstein', 'Saarland',
 ];
 
+const GERMAN_SET = new Set(CANONICAL_BUNDESLAENDER);
+
 function normRegion(name) {
   if (!name) return null;
   const s = name.trim();
@@ -556,11 +551,11 @@ function normRegion(name) {
   for (const k of CANONICAL_BUNDESLAENDER) {
     if (k.toLowerCase() === low) return k;
   }
-  return s;
+  return s; // return original (will be filtered out by GERMAN_SET check)
 }
 
 // ════════════════════════════════════════════════════════════
-//  COLOUR SCALE  (Red → Yellow → Green, D3-inspired)
+//  COLOUR SCALE  (Red → Yellow → Green)
 // ════════════════════════════════════════════════════════════
 const COLOR_STOPS = [
   [0.00, [215,  25,  28]],
@@ -577,7 +572,7 @@ function ratioColor(ratio) {
     const [t0, c0] = COLOR_STOPS[i];
     const [t1, c1] = COLOR_STOPS[i + 1];
     if (r >= t0 && r <= t1) {
-      const t = (r - t0) / (t1 - t0);
+      const t  = (r - t0) / (t1 - t0);
       const ri = Math.round(c0[0] + (c1[0] - c0[0]) * t);
       const gi = Math.round(c0[1] + (c1[1] - c0[1]) * t);
       const bi = Math.round(c0[2] + (c1[2] - c0[2]) * t);
@@ -597,25 +592,14 @@ function isoWeek(d) {
   const y1 = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
   return Math.ceil((((dt - y1) / 86400000) + 1) / 7);
 }
-function weekStart(d) {
-  const dt = new Date(d);
-  const day = dt.getDay() || 7;
-  dt.setDate(dt.getDate() - day + 1);
-  dt.setHours(0, 0, 0, 0);
-  return dt;
-}
-function weekEnd(d) {
-  const dt = weekStart(d);
-  dt.setDate(dt.getDate() + 6);
-  return dt;
-}
+
 function dateFmt(d) {
   return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
+
 function periodLabel(d, gran) {
-  if (gran === 'day')   return dateFmt(d);
+  if (gran === 'day') return dateFmt(d);
   if (gran === 'week') {
-    // SQL uses DATE_TRUNC(WEEK(MONDAY)), so d is already the Monday
     const we = new Date(d); we.setDate(we.getDate() + 6);
     const w  = isoWeek(d);
     return `W${String(w).padStart(2,'0')} ${d.getFullYear()}  (${dateFmt(d)} – ${dateFmt(we)})`;
@@ -624,95 +608,213 @@ function periodLabel(d, gran) {
   return '–';
 }
 
+// Monday of the week for a given date string (matches SQL DATE_TRUNC(WEEK(MONDAY)))
+function getMondayOf(dateStr) {
+  const d = new Date(dateStr + 'T12:00:00Z');
+  const dow = d.getUTCDay(); // 0=Sun
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setUTCDate(d.getUTCDate() + diff);
+  return d.toISOString().slice(0, 10);
+}
+
+function getMonthOf(dateStr) {
+  return dateStr.slice(0, 7) + '-01';
+}
+
+// Derive week/month rows from day rows (for CSV exports with only day data)
+function computeWeeks(dayRows) {
+  const m = {};
+  for (const r of dayRows) {
+    const slot = getMondayOf(r.slot);
+    const k = slot + '|' + r.region + '|' + r.city;
+    if (!m[k]) m[k] = { slotType: 'week', slot, region: r.region, city: r.city, aa: 0, ar: 0, ia: 0, ir: 0 };
+    m[k].aa += r.aa; m[k].ar += r.ar; m[k].ia += r.ia; m[k].ir += r.ir;
+  }
+  return Object.values(m);
+}
+
+function computeMonths(dayRows) {
+  const m = {};
+  for (const r of dayRows) {
+    const slot = getMonthOf(r.slot);
+    const k = slot + '|' + r.region + '|' + r.city;
+    if (!m[k]) m[k] = { slotType: 'month', slot, region: r.region, city: r.city, aa: 0, ar: 0, ia: 0, ir: 0 };
+    m[k].aa += r.aa; m[k].ar += r.ar; m[k].ia += r.ia; m[k].ir += r.ir;
+  }
+  return Object.values(m);
+}
+
+// Compute consented_ratio from aggregated 4-bucket counts (mirrors coef_view.sql formula).
+// For old CSV format (no usage split), falls back to simple allowed / total.
+function getRatio(d) {
+  const { aa, ar, ia, ir } = d;
+  if (ia !== undefined && ir !== undefined) {
+    // New format: full coef formula
+    const denom1 = aa + ia;
+    if (denom1 === 0) return null;
+    const activeRatio = aa / denom1;
+    const denom2 = aa + activeRatio * ir;
+    return denom2 > 0 ? aa / denom2 : null;
+  }
+  // Old format fallback
+  const total = (d.total ?? (aa + ar));
+  return total > 0 ? aa / total : null;
+}
+
+// Total "active" count for a data bucket (used for stats bar and bubble sizing)
+function getActive(d) {
+  return (d.ia !== undefined) ? d.aa + d.ar : (d.total ?? d.aa + d.ar);
+}
+
+// ════════════════════════════════════════════════════════════
+//  GEOCODING  (Nominatim + localStorage cache)
+// ════════════════════════════════════════════════════════════
+const geocodeCache = {};
+
+(function loadGeocodeCache() {
+  try {
+    const s = localStorage.getItem('de_city_coords_v1');
+    if (s) Object.assign(geocodeCache, JSON.parse(s));
+  } catch(e) {}
+})();
+
+function saveGeocodeCache() {
+  try {
+    localStorage.setItem('de_city_coords_v1', JSON.stringify(geocodeCache));
+  } catch(e) {}
+}
+
+let lastGeocodeTs = 0;
+
+async function resolveCoords(city) {
+  const key = city.toLowerCase().trim();
+  if (CITY_COORDS[key]) return CITY_COORDS[key];
+  if (key in geocodeCache) return geocodeCache[key]; // may be null (confirmed miss)
+
+  // Respect Nominatim rate limit: 1 req / sec
+  const now = Date.now();
+  const wait = Math.max(0, 1150 - (now - lastGeocodeTs));
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  lastGeocodeTs = Date.now();
+
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)},+Germany&format=json&limit=1&countrycodes=de`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(resp.status);
+    const data = await resp.json();
+    const coords = data.length > 0 ? [+data[0].lat, +data[0].lon] : null;
+    geocodeCache[key] = coords;
+    saveGeocodeCache();
+    return coords;
+  } catch(e) {
+    geocodeCache[key] = null;
+    saveGeocodeCache();
+    return null;
+  }
+}
+
+function setGeocodeStatus(msg) {
+  const el = document.getElementById('geocode-status');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
 // ════════════════════════════════════════════════════════════
 //  APPLICATION STATE
 // ════════════════════════════════════════════════════════════
 const S = {
-  rows:        [],   // parsed & normalised rows
-  periods:     [],   // sorted Date[] of available periods
-  periodIdx:   0,
-  gran:        'day',
-  view:        'region',
-  geoJSON:     null,
+  rows:         [],
+  periods:      [],
+  periodIdx:    0,
+  gran:         'day',
+  view:         'region',
+  geoJSON:      null,
+  newFormat:    false,  // true when CSV has the 4-bucket coef columns
 };
 
 let leafMap, geoLayer, bubbleLayer, legendCtrl;
+let renderToken = 0; // cancellation token for async renderCities
 
 // ════════════════════════════════════════════════════════════
-//  EXCEL PARSING
+//  FILE LOADING  (PapaParse for CSV)
 // ════════════════════════════════════════════════════════════
 function loadFile(file) {
   document.getElementById('file-name').textContent = file.name;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array', cellDates: true });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'yyyy-mm-dd' });
-      ingestRows(raw);
-    } catch(err) {
-      alert('Error reading file:\n' + err.message);
-    }
-  };
-  reader.readAsArrayBuffer(file);
+  Papa.parse(file, {
+    header: true,
+    skipEmptyLines: true,
+    complete(results) {
+      if (!results.data.length) { alert('CSV appears to be empty.'); return; }
+      ingestRows(results.data);
+    },
+    error(err) { alert('Error reading CSV:\n' + err.message); },
+  });
 }
 
-function norm(obj, ...keys) {
-  for (const k of keys) {
-    // try exact, lowercase, trimmed
-    for (const [rk, rv] of Object.entries(obj)) {
-      if (rk.toLowerCase().replace(/\s+/g,'_').trim() === k) return rv;
-    }
-  }
-  return undefined;
-}
-
+// ════════════════════════════════════════════════════════════
+//  INGEST  →  filter Germany, derive granularities
+// ════════════════════════════════════════════════════════════
 function ingestRows(raw) {
-  // Data is pre-aggregated by SQL: one row = slot_type × slot × region × city
-  S.rows = raw.map(r => {
-    const lo = {};
-    for (const [k, v] of Object.entries(r)) lo[k.toLowerCase().replace(/\s+/g,'_').trim()] = v;
-    const slotType = (lo.slot_type || '').trim().toLowerCase();
-    // slot comes as a date string (YYYY-MM-DD) from DATE_TRUNC
-    const slot    = String(lo.slot || lo.event_date_local || lo.date || '').trim();
-    const region  = normRegion(lo.visitor_region || lo.region || '');
-    const city    = (lo.visitor_city || lo.city || '').trim();
-    const allowed = parseInt(lo.cookies_allowed_count || lo.allowed || 0) || 0;
-    const refused = parseInt(lo.cookies_refused_count || lo.refused || 0) || 0;
-    const total   = parseInt(lo.total_count || lo.total || 0) || (allowed + refused);
-    return { slotType, slot, region, city, allowed, refused, total };
-  }).filter(r => r.slot && r.slot !== 'undefined' && r.slot !== 'null');
+  // Detect new format (has active_cookies_allowed / consented_ratio columns)
+  const sampleKeys = raw.length ? Object.keys(raw[0]).map(k => k.toLowerCase().trim()) : [];
+  S.newFormat = sampleKeys.some(k => k === 'active_cookies_allowed' || k === 'consented_ratio');
 
-  // Detect whether data contains slot_type column or is a flat date export
-  const hasSlotType = S.rows.some(r => ['day','week','month'].includes(r.slotType));
-  if (!hasSlotType) {
-    // Fallback: treat all rows as 'day' granularity (old format compatibility)
-    S.rows = S.rows.map(r => ({ ...r, slotType: 'day' }));
+  const parsed = raw.map(r => {
+    const lo = {};
+    for (const [k, v] of Object.entries(r)) {
+      lo[k.toLowerCase().replace(/\s+/g, '_').trim()] = v;
+    }
+    const slotType = (lo.slot_type || '').trim().toLowerCase();
+    const slot     = String(lo.slot || lo.event_date_local || lo.date || '').trim();
+    const region   = normRegion(lo.visitor_region || lo.region || '');
+    const city     = (lo.visitor_city || lo.city || '').trim();
+
+    let aa, ar, ia, ir;
+    if (S.newFormat) {
+      aa = parseFloat(lo.active_cookies_allowed   || 0) || 0;
+      ar = parseFloat(lo.active_cookies_refused    || 0) || 0;
+      ia = parseFloat(lo.inactive_cookies_allowed  || 0) || 0;
+      ir = parseFloat(lo.inactive_cookies_refused  || 0) || 0;
+    } else {
+      // Old format: simple allowed / refused counts; no active/inactive split
+      aa = parseInt(lo.cookies_allowed_count || lo.allowed || 0) || 0;
+      ar = parseInt(lo.cookies_refused_count || lo.refused || 0) || 0;
+      ia = undefined; ir = undefined; // signals old format in getRatio / getActive
+    }
+    return { slotType, slot, region, city, aa, ar, ia, ir };
+  }).filter(r => r.slot && r.slot !== 'undefined' && r.region);
+
+  // ── Keep Germany only ──
+  const deRows = parsed.filter(r => GERMAN_SET.has(r.region));
+
+  if (!deRows.length) {
+    alert('No German region data found in this file.\nExpected visitor_region values such as "Bayern", "Berlin", etc.');
+    return;
   }
 
+  // If no slot_type column present, assume all rows are day data
+  const hasSlotType = deRows.some(r => ['day', 'week', 'month'].includes(r.slotType));
+  const normalized  = hasSlotType ? deRows : deRows.map(r => ({ ...r, slotType: 'day' }));
+
+  const dayRows   = normalized.filter(r => r.slotType === 'day');
+  const weekRows  = normalized.some(r => r.slotType === 'week')
+                    ? normalized.filter(r => r.slotType === 'week')
+                    : computeWeeks(dayRows);
+  const monthRows = normalized.some(r => r.slotType === 'month')
+                    ? normalized.filter(r => r.slotType === 'month')
+                    : computeMonths(dayRows);
+
+  S.rows = [...dayRows, ...weekRows, ...monthRows];
   buildPeriods();
   showDashboard();
 }
 
 // ════════════════════════════════════════════════════════════
-//  PERIOD BUILDING
-//  Reads unique pre-aggregated slots for the current granularity
-//  directly from the data — no client-side date arithmetic needed.
+//  PERIODS
 // ════════════════════════════════════════════════════════════
 function buildPeriods() {
-  // Collect unique slot strings for the selected granularity
-  const slotSet = new Set(
-    S.rows
-      .filter(r => r.slotType === S.gran)
-      .map(r => r.slot)
-  );
-  // Sort chronologically and convert to Date objects
-  S.periods = [...slotSet]
-    .sort()
-    .map(s => new Date(s))
-    .filter(d => !isNaN(d));
-
-  // Default: most recent period
+  const slotSet = new Set(S.rows.filter(r => r.slotType === S.gran).map(r => r.slot));
+  S.periods = [...slotSet].sort().map(s => new Date(s + 'T12:00:00Z')).filter(d => !isNaN(d));
   S.periodIdx = Math.max(0, S.periods.length - 1);
 }
 
@@ -721,11 +823,8 @@ function buildPeriods() {
 // ════════════════════════════════════════════════════════════
 function getPeriodRows() {
   if (!S.periods.length) return [];
-  // Match on slot_type AND the exact slot date string (pre-aggregated by SQL)
   const targetSlot = S.periods[S.periodIdx].toISOString().slice(0, 10);
-  return S.rows.filter(r =>
-    r.slotType === S.gran && r.slot === targetSlot
-  );
+  return S.rows.filter(r => r.slotType === S.gran && r.slot === targetSlot);
 }
 
 function aggregateBy(rows, key) {
@@ -733,10 +832,11 @@ function aggregateBy(rows, key) {
   for (const r of rows) {
     const k = r[key];
     if (!k) continue;
-    if (!m[k]) m[k] = { allowed:0, refused:0, total:0 };
-    m[k].allowed += r.allowed;
-    m[k].refused += r.refused;
-    m[k].total   += r.total;
+    if (!m[k]) m[k] = { aa: 0, ar: 0, ia: r.ia !== undefined ? 0 : undefined, ir: r.ir !== undefined ? 0 : undefined };
+    m[k].aa += r.aa;
+    m[k].ar += r.ar;
+    if (r.ia !== undefined) m[k].ia = (m[k].ia || 0) + r.ia;
+    if (r.ir !== undefined) m[k].ir = (m[k].ir || 0) + r.ir;
   }
   return m;
 }
@@ -745,13 +845,12 @@ function aggregateBy(rows, key) {
 //  MAP INIT
 // ════════════════════════════════════════════════════════════
 function initMap() {
-  leafMap = L.map('map', { center:[51.1657,10.4515], zoom:6, zoomControl:true });
+  leafMap = L.map('map', { center: [51.1657, 10.4515], zoom: 6, zoomControl: true });
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© OpenStreetMap, © CARTO',
-    subdomains: 'abcd', maxZoom: 19
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> © <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19,
   }).addTo(leafMap);
 
-  // Legend
   legendCtrl = L.control({ position: 'bottomright' });
   legendCtrl.onAdd = () => {
     const d = L.DomUtil.create('div', 'leaflet-control map-legend');
@@ -761,16 +860,25 @@ function initMap() {
     return d;
   };
   legendCtrl.addTo(leafMap);
-
   loadGeoJSON();
 }
 
-// ── Embedded GeoJSON – 16 German Bundesländer (simplified polygons) ──────────
-const GERMANY_GEOJSON = {"type":"FeatureCollection","features":[{"type":"Feature","properties":{"NAME_1":"Schleswig-Holstein"},"geometry":{"type":"Polygon","coordinates":[[[8.62,53.55],[9.02,53.41],[9.72,53.4],[10.34,53.59],[10.94,53.82],[11.31,54.09],[10.88,54.48],[10.1,55.06],[9.36,54.83],[8.97,54.9],[8.62,55.01],[8.37,54.79],[8.02,54.6],[8.31,54.0],[8.62,53.55]]]}},{"type":"Feature","properties":{"NAME_1":"Hamburg"},"geometry":{"type":"Polygon","coordinates":[[[9.73,53.41],[10.33,53.59],[10.2,53.73],[9.83,53.74],[9.73,53.41]]]}},{"type":"Feature","properties":{"NAME_1":"Mecklenburg-Vorpommern"},"geometry":{"type":"Polygon","coordinates":[[[10.59,53.55],[11.31,54.09],[12.37,54.31],[13.1,54.13],[13.98,54.07],[14.28,54.01],[14.41,53.78],[14.05,53.33],[13.43,53.1],[12.26,53.26],[11.56,53.11],[10.59,53.11],[10.59,53.55]]]}},{"type":"Feature","properties":{"NAME_1":"Bremen"},"geometry":{"type":"Polygon","coordinates":[[[8.48,53.01],[8.98,53.01],[8.98,53.23],[8.7,53.24],[8.48,53.23],[8.48,53.01]]]}},{"type":"Feature","properties":{"NAME_1":"Niedersachsen"},"geometry":{"type":"Polygon","coordinates":[[[6.65,51.41],[7.06,51.29],[7.6,51.29],[8.48,51.43],[9.46,51.4],[9.89,51.37],[10.57,51.49],[11.6,51.67],[11.6,52.55],[11.56,53.11],[12.26,53.26],[10.59,53.11],[10.59,53.55],[9.72,53.4],[9.02,53.41],[8.62,53.55],[8.31,54.0],[8.02,53.6],[7.32,53.01],[6.98,52.8],[6.71,52.66],[6.65,51.41]]]}},{"type":"Feature","properties":{"NAME_1":"Sachsen-Anhalt"},"geometry":{"type":"Polygon","coordinates":[[[10.57,51.49],[11.6,51.67],[11.6,52.55],[11.56,53.11],[10.59,53.11],[10.59,53.05],[10.57,51.49]]]}},{"type":"Feature","properties":{"NAME_1":"Brandenburg"},"geometry":{"type":"Polygon","coordinates":[[[11.28,51.36],[12.67,51.36],[13.84,51.5],[14.77,51.56],[14.77,52.44],[14.4,53.26],[13.43,53.1],[12.26,53.26],[11.56,53.11],[11.6,52.55],[11.28,52.55],[11.28,51.36]]]}},{"type":"Feature","properties":{"NAME_1":"Berlin"},"geometry":{"type":"Polygon","coordinates":[[[13.09,52.34],[13.76,52.34],[13.76,52.68],[13.09,52.68],[13.09,52.34]]]}},{"type":"Feature","properties":{"NAME_1":"Nordrhein-Westfalen"},"geometry":{"type":"Polygon","coordinates":[[[6.0,50.31],[6.47,50.31],[6.86,51.05],[7.15,51.1],[7.82,51.05],[8.31,51.28],[9.46,51.4],[9.46,52.53],[8.48,51.43],[7.6,51.29],[7.06,51.29],[6.65,51.41],[6.65,51.29],[6.0,51.1],[6.0,50.31]]]}},{"type":"Feature","properties":{"NAME_1":"Hessen"},"geometry":{"type":"Polygon","coordinates":[[[7.79,49.39],[8.53,49.39],[9.22,49.12],[9.89,49.39],[10.24,49.9],[10.24,50.56],[10.57,51.49],[9.89,51.37],[9.46,51.4],[8.31,51.28],[7.79,50.69],[7.79,49.39]]]}},{"type":"Feature","properties":{"NAME_1":"Thüringen"},"geometry":{"type":"Polygon","coordinates":[[[9.89,50.19],[10.57,50.19],[11.6,50.19],[12.67,50.19],[12.67,51.36],[11.28,51.36],[10.57,51.49],[10.24,50.56],[9.89,51.37],[9.89,50.19]]]}},{"type":"Feature","properties":{"NAME_1":"Sachsen"},"geometry":{"type":"Polygon","coordinates":[[[11.87,50.18],[12.67,50.19],[13.84,50.17],[15.04,50.76],[15.04,51.57],[14.77,51.56],[13.84,51.5],[12.67,51.36],[11.87,51.67],[11.87,50.18]]]}},{"type":"Feature","properties":{"NAME_1":"Rheinland-Pfalz"},"geometry":{"type":"Polygon","coordinates":[[[6.11,49.11],[7.42,49.11],[8.53,49.39],[7.79,49.39],[7.79,50.69],[8.31,51.28],[7.15,51.1],[6.86,51.05],[6.47,50.31],[6.11,49.97],[6.11,49.11]]]}},{"type":"Feature","properties":{"NAME_1":"Saarland"},"geometry":{"type":"Polygon","coordinates":[[[6.36,49.11],[7.42,49.11],[7.42,49.64],[6.36,49.64],[6.36,49.11]]]}},{"type":"Feature","properties":{"NAME_1":"Baden-Württemberg"},"geometry":{"type":"Polygon","coordinates":[[[7.59,47.57],[8.97,47.53],[10.49,47.53],[10.49,48.4],[9.18,48.42],[9.18,48.78],[9.22,49.12],[8.53,49.39],[7.79,49.39],[7.42,49.11],[7.42,49.0],[7.59,47.57]]]}},{"type":"Feature","properties":{"NAME_1":"Bayern"},"geometry":{"type":"Polygon","coordinates":[[[9.18,48.42],[10.49,48.4],[10.49,47.53],[10.99,47.27],[13.01,47.5],[13.84,47.63],[13.84,48.44],[13.84,49.2],[13.84,50.17],[12.67,50.19],[11.6,50.19],[10.57,50.19],[9.89,50.19],[9.89,49.39],[9.22,49.12],[9.18,48.78],[9.18,48.42]]]}}]};
-
-function loadGeoJSON() {
-  // GeoJSON is embedded – no network request needed
-  S.geoJSON = GERMANY_GEOJSON;
+// ════════════════════════════════════════════════════════════
+//  GEOJSON – fetch real Germany borders from CDN
+// ════════════════════════════════════════════════════════════
+async function loadGeoJSON() {
+  const msgEl = document.getElementById('loading-msg');
+  msgEl.textContent = 'Loading Germany map…';
+  try {
+    const resp = await fetch(
+      'https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json'
+    );
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    S.geoJSON = await resp.json();
+  } catch(e) {
+    console.warn('GeoJSON fetch failed:', e);
+    // leave S.geoJSON = null; map will still work without fill layer
+  }
   document.getElementById('loading-overlay').style.display = 'none';
   renderMap();
 }
@@ -780,127 +888,148 @@ function loadGeoJSON() {
 // ════════════════════════════════════════════════════════════
 function renderMap() {
   if (!leafMap) return;
+  ++renderToken; // cancel any in-flight async renderCities
+
   const rows = getPeriodRows();
 
-  // Update toolbar
+  // Toolbar
   document.getElementById('period-label').textContent = S.periods.length
     ? periodLabel(S.periods[S.periodIdx], S.gran) : '–';
   document.getElementById('btn-prev').disabled = S.periodIdx <= 0;
   document.getElementById('btn-next').disabled = S.periodIdx >= S.periods.length - 1;
 
-  // Stats
-  const totA = rows.reduce((s,r)=>s+r.allowed,0);
-  const totT = rows.reduce((s,r)=>s+r.total,0);
-  document.getElementById('stat-total').textContent = totT.toLocaleString('de-DE');
-  document.getElementById('stat-ratio').textContent = totT>0 ? (totA/totT*100).toFixed(1)+'%' : '–';
+  // Stats — aggregate all rows for the period, then compute ratio from summed buckets
+  const totals = rows.reduce((s, r) => {
+    s.aa += r.aa; s.ar += r.ar;
+    if (r.ia !== undefined) { s.ia += r.ia; s.ir += r.ir; }
+    return s;
+  }, { aa: 0, ar: 0, ia: 0, ir: 0 });
+  const overallRatio = getRatio(S.newFormat ? totals : { aa: totals.aa, ar: totals.ar, total: totals.aa + totals.ar });
+  const activeCount  = S.newFormat ? totals.aa + totals.ar : totals.aa + totals.ar;
+  document.getElementById('stat-total').textContent = activeCount.toLocaleString('de-DE');
+  document.getElementById('stat-ratio').textContent = overallRatio !== null ? (overallRatio * 100).toFixed(1) + '%' : '–';
 
-  // No data notice
-  const noData = !rows.length;
-  document.getElementById('no-data-notice').style.display = noData ? 'block' : 'none';
+  document.getElementById('no-data-notice').style.display = rows.length ? 'none' : 'block';
+  setGeocodeStatus('');
 
   // Remove old layers
   if (geoLayer)    { leafMap.removeLayer(geoLayer);    geoLayer    = null; }
   if (bubbleLayer) { leafMap.removeLayer(bubbleLayer); bubbleLayer = null; }
 
   if (S.view === 'region') {
-    renderRegions(rows);
     document.getElementById('bubble-legend').style.display = 'none';
+    renderRegions(rows);
   } else {
-    renderCities(rows);
     document.getElementById('bubble-legend').style.display = 'block';
+    renderCities(rows, renderToken); // async, fire-and-forget
   }
 }
 
-/* ── CHOROPLETH ── */
+/* ── CHOROPLETH (regions) ── */
 function renderRegions(rows) {
   if (!S.geoJSON) return;
   const agg = aggregateBy(rows, 'region');
-  const areas = Object.keys(agg).filter(k => agg[k].total > 0);
+  const areas = Object.keys(agg).filter(k => (k in agg) && (agg[k].aa + agg[k].ar) > 0);
   document.getElementById('stat-areas').textContent = areas.length;
   document.getElementById('stat-areas-lbl').textContent = 'Regions';
 
   geoLayer = L.geoJSON(S.geoJSON, {
     style(f) {
-      const name = f.properties.NAME_1 || f.properties.name || f.properties.GEN || '';
-      const d = agg[name];
-      const ratio = d && d.total > 0 ? d.allowed / d.total : null;
+      // isellsoap uses 'name'; fall back to other common keys
+      const name  = f.properties.name || f.properties.NAME_1 || f.properties.GEN || '';
+      const d     = agg[name];
+      const ratio = d ? getRatio(d) : null;
       return {
         fillColor:   ratioColor(ratio),
-        fillOpacity: ratio !== null ? 0.78 : 0.15,
+        fillOpacity: ratio !== null ? 0.78 : 0.12,
         color:       '#555',
-        weight:      1.2,
+        weight:      1.3,
         opacity:     0.8,
       };
     },
     onEachFeature(f, layer) {
-      const name = f.properties.NAME_1 || f.properties.name || f.properties.GEN || '';
-      const d = agg[name] || { allowed:0, refused:0, total:0 };
-      const ratio = d.total > 0 ? d.allowed / d.total : null;
-
+      const name  = f.properties.name || f.properties.NAME_1 || f.properties.GEN || '';
+      const d     = agg[name] || { aa: 0, ar: 0, ia: S.newFormat ? 0 : undefined, ir: S.newFormat ? 0 : undefined };
+      const ratio = getRatio(d);
       layer.on({
         mouseover(e) {
           layer.setStyle({ weight: 2.5, color: '#222', fillOpacity: 0.9 });
           layer.bringToFront();
           showTT(e.originalEvent, name, ratio, d);
         },
-        mouseout() {
-          geoLayer.resetStyle(layer);
-          hideTT();
-        },
+        mouseout() { geoLayer.resetStyle(layer); hideTT(); },
         mousemove(e) { moveTT(e.originalEvent); },
       });
-    }
+    },
   }).addTo(leafMap);
 }
 
-/* ── BUBBLE MAP ── */
-function renderCities(rows) {
-  const agg = aggregateBy(rows, 'city');
-  const cities = Object.keys(agg).filter(c => agg[c].total > 0);
-  document.getElementById('stat-areas').textContent = cities.length;
-  document.getElementById('stat-areas-lbl').textContent = 'Cities';
+/* ── BUBBLE MAP (cities) ── */
+function createCityMarker(city, coords, d, maxT) {
+  const ratio   = getRatio(d);
+  const volume  = getActive(d);
+  const r       = 5 + Math.sqrt(volume / maxT) * 26;
+  const m = L.circleMarker(coords, {
+    radius: r, fillColor: ratioColor(ratio),
+    color: '#fff', weight: 1.5, opacity: 1, fillOpacity: 0.82,
+  });
+  m.on({
+    mouseover(e) { m.setStyle({ weight: 2.5, color: '#222' }); showTT(e.originalEvent, city, ratio, d); },
+    mouseout()   { m.setStyle({ weight: 1.5, color: '#fff' }); hideTT(); },
+    mousemove(e) { moveTT(e.originalEvent); },
+  });
+  return m;
+}
 
-  // Background regions (faint)
+async function renderCities(rows, token) {
+  // Faint region outlines in background
   if (S.geoJSON) {
     geoLayer = L.geoJSON(S.geoJSON, {
-      style: { fillColor:'#e4e8ef', weight:1, color:'#b5bcc9', fillOpacity:0.4, opacity:0.7 }
+      style: { fillColor: '#e4e8ef', weight: 1, color: '#b5bcc9', fillOpacity: 0.35, opacity: 0.7 },
     }).addTo(leafMap);
   }
 
-  const maxT = Math.max(...cities.map(c => agg[c].total), 1);
-  const markers = [];
+  const agg = aggregateBy(rows, 'city');
+  const cityEntries = Object.entries(agg)
+    .filter(([, d]) => getActive(d) >= 5)              // skip noise
+    .sort((a, b) => getActive(b[1]) - getActive(a[1])) // biggest first
+    .slice(0, 300);                                    // cap for performance
 
-  for (const city of cities) {
-    const coords = CITY_COORDS[city.toLowerCase()];
-    if (!coords) continue;
-    const d = agg[city];
-    const ratio = d.total > 0 ? d.allowed / d.total : null;
-    const r = 5 + Math.sqrt(d.total / maxT) * 26;
+  const maxT = Math.max(...cityEntries.map(([, d]) => getActive(d)), 1);
+  document.getElementById('stat-areas').textContent = cityEntries.length;
+  document.getElementById('stat-areas-lbl').textContent = 'Cities';
 
-    const m = L.circleMarker(coords, {
-      radius: r,
-      fillColor: ratioColor(ratio),
-      color: '#fff',
-      weight: 1.5,
-      opacity: 1,
-      fillOpacity: 0.82,
-    });
-    m.on({
-      mouseover(e) {
-        m.setStyle({ weight: 2.5, color: '#222' });
-        showTT(e.originalEvent, city, ratio, d);
-      },
-      mouseout() {
-        m.setStyle({ weight: 1.5, color: '#fff' });
-        hideTT();
-      },
-      mousemove(e) { moveTT(e.originalEvent); },
-    });
-    markers.push(m);
+  const markerGroup = L.layerGroup().addTo(leafMap);
+  bubbleLayer = markerGroup;
+  if (geoLayer) geoLayer.bringToBack();
+
+  // First pass: cities with known coords (instant)
+  const toGeocode = [];
+  for (const [city, d] of cityEntries) {
+    const key    = city.toLowerCase().trim();
+    const coords = CITY_COORDS[key] ?? (key in geocodeCache ? geocodeCache[key] : undefined);
+    if (coords) {
+      markerGroup.addLayer(createCityMarker(city, coords, d, maxT));
+    } else if (coords === undefined) {
+      toGeocode.push([city, d]); // needs geocoding
+    }
+    // null = confirmed not found → skip silently
   }
 
-  bubbleLayer = L.layerGroup(markers).addTo(leafMap);
-  if (geoLayer) geoLayer.bringToBack();
+  if (!toGeocode.length) return;
+
+  // Second pass: geocode remaining cities via Nominatim
+  setGeocodeStatus(`Locating ${toGeocode.length} cities…`);
+
+  for (let i = 0; i < toGeocode.length; i++) {
+    if (token !== renderToken) { setGeocodeStatus(''); return; } // view changed, bail out
+    const [city, d] = toGeocode[i];
+    const coords = await resolveCoords(city);
+    if (token !== renderToken) { setGeocodeStatus(''); return; }
+    if (coords) markerGroup.addLayer(createCityMarker(city, coords, d, maxT));
+    setGeocodeStatus(`Locating cities… ${i + 1} / ${toGeocode.length}`);
+  }
+  setGeocodeStatus('');
 }
 
 // ════════════════════════════════════════════════════════════
@@ -909,26 +1038,30 @@ function renderCities(rows) {
 const ttEl = document.getElementById('map-tooltip');
 
 function showTT(ev, name, ratio, d) {
-  const pct   = ratio !== null ? (ratio * 100).toFixed(1) + ' %' : 'N/A';
-  const col   = ratioColor(ratio);
-  const fillW = ratio !== null ? (ratio * 100).toFixed(1) + '%' : '0%';
+  const pct      = ratio !== null ? (ratio * 100).toFixed(1) + ' %' : 'N/A';
+  const col      = ratioColor(ratio);
+  const fillW    = ratio !== null ? (ratio * 100).toFixed(1) + '%' : '0%';
+  // Show active counts (the observable signal); inactive are used only in the formula
+  const positive = d.aa.toLocaleString('de-DE');
+  const negative = d.ar.toLocaleString('de-DE');
+  const total    = getActive(d).toLocaleString('de-DE');
   ttEl.innerHTML = `
     <div class="tt-name">${escHtml(name)}</div>
     <div class="tt-ratio" style="color:${col}">${pct}</div>
-    <div class="tt-row"><span>▲ Positive</span><span class="v">${d.allowed.toLocaleString('de-DE')}</span></div>
-    <div class="tt-row"><span>▼ Negative</span><span class="v">${d.refused.toLocaleString('de-DE')}</span></div>
-    <div class="tt-row"><span>∑ Total</span><span class="v">${d.total.toLocaleString('de-DE')}</span></div>
+    <div class="tt-row"><span>▲ Positive</span><span class="v">${positive}</span></div>
+    <div class="tt-row"><span>▼ Negative</span><span class="v">${negative}</span></div>
+    <div class="tt-row"><span>∑ Total</span><span class="v">${total}</span></div>
     <div class="tt-bar"><div class="tt-bar-fill" style="width:${fillW};background:${col}"></div></div>
   `;
   ttEl.style.display = 'block';
   moveTT(ev);
 }
 function moveTT(ev) {
-  const box  = document.getElementById('map-container').getBoundingClientRect();
-  const mx   = ev.clientX - box.left;
-  const my   = ev.clientY - box.top;
-  const ttW  = ttEl.offsetWidth  || 220;
-  const ttH  = ttEl.offsetHeight || 160;
+  const box = document.getElementById('map-container').getBoundingClientRect();
+  const mx  = ev.clientX - box.left;
+  const my  = ev.clientY - box.top;
+  const ttW = ttEl.offsetWidth  || 220;
+  const ttH = ttEl.offsetHeight || 160;
   let lx = mx + 14, ly = my - 10;
   if (lx + ttW > box.width  - 10) lx = mx - ttW - 10;
   if (ly + ttH > box.height - 10) ly = my - ttH - 10;
@@ -941,15 +1074,14 @@ function escHtml(s) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  SHOW DASHBOARD
+//  DASHBOARD / RESET
 // ════════════════════════════════════════════════════════════
 function showDashboard() {
-  document.getElementById('upload-zone').style.display = 'none';
-  document.getElementById('dashboard').style.display  = 'flex';
+  document.getElementById('upload-zone').style.display  = 'none';
+  document.getElementById('dashboard').style.display    = 'flex';
   document.getElementById('file-badge').classList.add('visible');
   if (!leafMap) {
-    // small delay to ensure the map container is visible before Leaflet init
-    setTimeout(() => { initMap(); }, 50);
+    setTimeout(() => initMap(), 50);
   } else {
     buildPeriods();
     renderMap();
@@ -957,63 +1089,60 @@ function showDashboard() {
 }
 
 function resetToUpload() {
-  document.getElementById('upload-zone').style.display = 'flex';
-  document.getElementById('dashboard').style.display  = 'none';
+  document.getElementById('upload-zone').style.display  = 'flex';
+  document.getElementById('dashboard').style.display    = 'none';
   document.getElementById('file-badge').classList.remove('visible');
   document.getElementById('file-input').value = '';
+  ++renderToken; // cancel geocoding
+  setGeocodeStatus('');
+  S.rows = []; S.periods = [];
 }
 
 // ════════════════════════════════════════════════════════════
 //  UI BINDINGS
 // ════════════════════════════════════════════════════════════
 (function setupUI() {
-  // File upload
-  const drop  = document.getElementById('drop-area');
-  const finp  = document.getElementById('file-input');
+  const drop = document.getElementById('drop-area');
+  const finp = document.getElementById('file-input');
   drop.addEventListener('click', () => finp.click());
-  finp.addEventListener('change', e => { if(e.target.files[0]) loadFile(e.target.files[0]); });
-  drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag-over'); });
-  drop.addEventListener('dragleave', ()=> drop.classList.remove('drag-over'));
+  finp.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+  drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave', ()  => drop.classList.remove('drag-over'));
   drop.addEventListener('drop', e => {
     e.preventDefault(); drop.classList.remove('drag-over');
-    if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]);
   });
 
-  // Reset
   document.getElementById('reset-btn').addEventListener('click', resetToUpload);
 
-  // Granularity
   document.getElementById('gran-group').addEventListener('click', e => {
-    const btn = e.target.closest('[data-val]'); if(!btn) return;
-    document.querySelectorAll('#gran-group button').forEach(b=>b.classList.remove('active'));
+    const btn = e.target.closest('[data-val]'); if (!btn) return;
+    document.querySelectorAll('#gran-group button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     S.gran = btn.dataset.val;
     buildPeriods();
     renderMap();
   });
 
-  // View
   document.getElementById('view-group').addEventListener('click', e => {
-    const btn = e.target.closest('[data-val]'); if(!btn) return;
-    document.querySelectorAll('#view-group button').forEach(b=>b.classList.remove('active'));
+    const btn = e.target.closest('[data-val]'); if (!btn) return;
+    document.querySelectorAll('#view-group button').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     S.view = btn.dataset.val;
     renderMap();
   });
 
-  // Period nav
-  document.getElementById('btn-prev').addEventListener('click', ()=>{
-    if(S.periodIdx > 0){ S.periodIdx--; renderMap(); }
+  document.getElementById('btn-prev').addEventListener('click', () => {
+    if (S.periodIdx > 0) { S.periodIdx--; renderMap(); }
   });
-  document.getElementById('btn-next').addEventListener('click', ()=>{
-    if(S.periodIdx < S.periods.length-1){ S.periodIdx++; renderMap(); }
+  document.getElementById('btn-next').addEventListener('click', () => {
+    if (S.periodIdx < S.periods.length - 1) { S.periodIdx++; renderMap(); }
   });
 
-  // Keyboard
   document.addEventListener('keydown', e => {
-    if(document.getElementById('dashboard').style.display==='none') return;
-    if(e.key==='ArrowLeft'  && !e.altKey) document.getElementById('btn-prev').click();
-    if(e.key==='ArrowRight' && !e.altKey) document.getElementById('btn-next').click();
+    if (document.getElementById('dashboard').style.display === 'none') return;
+    if (e.key === 'ArrowLeft'  && !e.altKey) document.getElementById('btn-prev').click();
+    if (e.key === 'ArrowRight' && !e.altKey) document.getElementById('btn-next').click();
   });
 })();
 </script>
